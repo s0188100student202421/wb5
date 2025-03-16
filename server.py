@@ -12,7 +12,6 @@ import os
 import hashlib            
 import datetime          
 
-
 #----------Получение и настройка секретного ключа для JWT-------------------
 SECRET_KEY = os.environ.get('JWT_SECRET_KEY') 
 if not SECRET_KEY:
@@ -61,7 +60,7 @@ def hash_password(password):
 
 class HttpProcessor(BaseHTTPRequestHandler):
     def do_GET(self):
-        if self.path.startswith("/login"):
+        if self.path.startswith("/wb5/login"):
             self.send_response(200)
             self.send_header('Content-Type', 'text/html; charset=utf-8')
             self.end_headers()
@@ -71,12 +70,12 @@ class HttpProcessor(BaseHTTPRequestHandler):
                 self.wfile.write(content.encode('utf-8'))
             except FileNotFoundError:
                 self.wfile.write(b"login.html not found")
-        elif self.path == "/":
+        elif self.path == "/wb5/":
             cookie = cookies.SimpleCookie(self.headers.get('Cookie'))
             auth_token = cookie.get("auth_token")
             if not auth_token or not verify_jwt(auth_token.value):
                 self.send_response(302)
-                self.send_header("Location", "/login")
+                self.send_header("Location", "/wb5/login")
                 self.end_headers()
                 return
 
@@ -132,7 +131,7 @@ class HttpProcessor(BaseHTTPRequestHandler):
                     if field not in error_dict:
                         html_content = html_content.replace(f"{{{{error_{field}}}}}", "")
             else:
-                for field in ['fio', 'phone', 'email', 'bio', 'languages', 'gender', 'check']:
+                for field in ['fio', 'phone', 'email', 'bio', 'languages', 'gender', 'check', 'date']:
                     html_content = html_content.replace(f"{{{{error_{field}}}}}", " ")
 
             self.wfile.write(html_content.encode('utf-8'))
@@ -141,7 +140,7 @@ class HttpProcessor(BaseHTTPRequestHandler):
             self.end_headers()
 
     def do_POST(self):
-        if self.path == "/login":
+        if self.path == "/wb5/login":
             form = cgi.FieldStorage(fp=self.rfile, headers=self.headers, environ={'REQUEST_METHOD': 'POST'})
             login_input = form.getvalue("login")
             password_input = form.getvalue("password")
@@ -153,10 +152,10 @@ class HttpProcessor(BaseHTTPRequestHandler):
 
             try:
                 connection = mysql.connector.connect(
-                    host='localhost',
+                    host='u68824_2',
                     database='u68824',
                     user='u68824',
-                    password='MyStrongPass'
+                    password='u68824'
                 )
                 if connection.is_connected():
                     cursor = connection.cursor()
@@ -168,16 +167,16 @@ class HttpProcessor(BaseHTTPRequestHandler):
                             token = generate_jwt(user_id)
                             cookie = cookies.SimpleCookie()
                             cookie["auth_token"] = token
-                            cookie["auth_token"]["path"] = "/"
+                            cookie["auth_token"]["path"] = "/wb5/"
                             cookie["auth_token"]["max-age"] = 3600 
                             cookie["auth_token"]["httponly"] = True
                             # Сохраняем user_id в cookie
                             cookie["user_id"] = str(user_id)
-                            cookie["user_id"]["path"] = "/"
+                            cookie["user_id"]["path"] = "/wb5/"
                             cookie["user_id"]["max-age"] = 3600 
                             cookie["user_id"]["httponly"] = True   
                             self.send_response(302)
-                            self.send_header("Location", "/")
+                            self.send_header("Location", "/wb5/")
                             for morsel in cookie.values():
                                 self.send_header("Set-Cookie", morsel.OutputString())
                             self.end_headers()
@@ -198,16 +197,16 @@ class HttpProcessor(BaseHTTPRequestHandler):
                             token = generate_jwt(user_id)
                             cookie = cookies.SimpleCookie()
                             cookie["auth_token"] = token
-                            cookie["auth_token"]["path"] = "/"
+                            cookie["auth_token"]["path"] = "/wb5/"
                             cookie["auth_token"]["max-age"] = 3600 
                             cookie["auth_token"]["httponly"] = True
                             # Сохраняем user_id в cookie
                             cookie["user_id"] = str(user_id)
-                            cookie["user_id"]["path"] = "/"
+                            cookie["user_id"]["path"] = "/wb5/"
                             cookie["user_id"]["max-age"] = 3600 
                             cookie["user_id"]["httponly"] = True
                             self.send_response(302)
-                            self.send_header("Location", "/")
+                            self.send_header("Location", "/wb5/")
                             for morsel in cookie.values():
                                 self.send_header("Set-Cookie", morsel.OutputString())
                             self.end_headers()
@@ -222,13 +221,13 @@ class HttpProcessor(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(f"Database error: {e}".encode('utf-8'))
 
-        elif self.path == "/":
+        elif self.path == "/wb5/":
             cookie = cookies.SimpleCookie(self.headers.get('Cookie'))
             auth_token = cookie.get("auth_token")
             user_id = cookie.get("user_id")
             if not auth_token or not verify_jwt(auth_token.value):
                 self.send_response(302)
-                self.send_header("Location", "/login")
+                self.send_header("Location", "/wb5/login")
                 self.end_headers()
                 return
             if not user_id:
@@ -280,22 +279,22 @@ class HttpProcessor(BaseHTTPRequestHandler):
                     value = locals().get(field, '')
                     if value:
                         cookie[field] = safe_base64_encode(value)
-                        cookie[field]['path'] = '/'
+                        cookie[field]['path'] = '/wb5/'
                         cookie[field]['httponly'] = True
                         cookie[field]['max-age'] = 31536000
                 if languages:
                     cookie['languages'] = safe_base64_encode(",".join(languages))
-                    cookie['languages']['path'] = '/'
+                    cookie['languages']['path'] = '/wb5/'
                     cookie['languages']['httponly'] = True
                     cookie['languages']['max-age'] = 31536000
 
                 cookie["errors"] = safe_base64_encode(json.dumps(errors))
-                cookie["errors"]['path'] = '/'
+                cookie["errors"]['path'] = '/wb5/'
                 cookie["errors"]['httponly'] = True
                 cookie["errors"]['max-age'] = 3600
 
                 self.send_response(302)
-                self.send_header('Location', '/')
+                self.send_header('Location', '/wb5/')
                 for morsel in cookie.values():
                     self.send_header('Set-Cookie', morsel.OutputString())
                 self.end_headers()
@@ -303,10 +302,10 @@ class HttpProcessor(BaseHTTPRequestHandler):
 
             try:
                 connection = mysql.connector.connect(
-                    host='localhost',
+                    host='u68824_2',
                     database='u68824',
                     user='u68824',
-                    password='MyStrongPass'
+                    password='u68824'
                 )
                 if connection.is_connected():
                     cursor = connection.cursor()
@@ -335,14 +334,14 @@ class HttpProcessor(BaseHTTPRequestHandler):
                     cookie = cookies.SimpleCookie()
                     for field in ['fio', 'phone', 'email', 'date', 'bio', 'gender', 'check']:
                         cookie[field] = ""
-                        cookie[field]['path'] = '/'
+                        cookie[field]['path'] = '/wb5/'
                         cookie[field]['max-age'] = 0
                     if languages:
                         cookie['languages'] = ""
-                        cookie['languages']['path'] = '/'
+                        cookie['languages']['path'] = '/wb5/'
                         cookie['languages']['max-age'] = 0
                     cookie['errors'] = ""
-                    cookie['errors']['path'] = '/'
+                    cookie['errors']['path'] = '/wb5/'
                     cookie['errors']['max-age'] = 0
 
                     self.send_response(200)
@@ -361,7 +360,7 @@ class HttpProcessor(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    port = 8004
+    port = 8006
     serv = HTTPServer(("0.0.0.0", port), HttpProcessor)
     print(f"Server is running on port {port}...")
     serv.serve_forever()
