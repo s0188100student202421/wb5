@@ -60,7 +60,18 @@ def hash_password(password):
 
 class HttpProcessor(BaseHTTPRequestHandler):
     def do_GET(self):
-        if self.path.startswith("/wb5/login"):
+        if self.path.startswith("/wb5/static/"):
+            try:
+                mime_type = "text/css"
+                with open(self.path[1:], 'rb') as file:
+                    content = file.read()
+                self.send_response(200)
+                self.send_header('Content-Type', mime_type)
+                self.end_headers()
+                self.wfile.write(content)
+            except FileNotFoundError:
+                self.send_error(404, "File not found")
+        elif self.path.startswith("/wb5/login"):
             self.send_response(200)
             self.send_header('Content-Type', 'text/html; charset=utf-8')
             self.end_headers()
